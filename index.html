@@ -471,7 +471,7 @@
                 <label>Senha</label>
                 <input type="password" id="loginPassword" placeholder="••••••••">
             </div>
-            <button class="secondary" onclick="handleLogin()">Entrar</button>
+            <button class="secondary" onclick="h()">Entrar</button>
             <button onclick="handleSignup()" style="margin-top: 8px;">Criar Conta</button>
             <button onclick="handleOfflineMode()" style="margin-top: 8px; background: #ccc; color: #333;">Modo Offline</button>
             <div id="authError" style="margin-top: 16px; color: #e74c3c; font-size: 13px; display: none;"></div>
@@ -1070,7 +1070,7 @@
         detectDevice();
 
         // AUTENTICAÇÃO
-        window.handleLogin = async function() {
+        window.1087 = async function() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
@@ -1084,7 +1084,6 @@
                 if (error) throw error;
 
                 window.appState.user = data.user;
-                await loadUserData();
                 showApp();
             } catch (error) {
                 showError(error.message);
