@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1B2A41">
+    <title>JANUS — Central Privada Patrimonial</title>
+    <style>
+        :root {
+            --bg: #F5F0E8;
+            --surface: #ffffff;
+            --ink: #1B2A41;
+            --ink-soft: #545F76;
+            --petrol: #B58A47;
+            --pos: #1f7a4d;
+            --neg: #b3402f;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #1B2A41, #2E3E58);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 { font-size: 36px; font-weight: 700; }
+        .header p { opacity: 0.9; margin-top: 8px; }
+
+        .status {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .status.ok { background: #D4EDDA; border-left-color: #1f7a4d; color: #0c3c26; }
+        .status.error { background: #F8D7DA; border-left-color: #b3402f; color: #721c24; }
+        .status.info { background: #D1ECF1; border-left-color: #0c5460; color: #0c5460; }
+
+        .card {
+            background: white;
+            border: 1px solid #E5DBC9;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 2px rgba(27,42,65,0.06);
+        }
+
+        .card h3 { margin: 0 0 16px 0; color: var(--ink); font-size: 18px; }
+
+        .field {
+            margin-bottom: 12px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #E5DBC9;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--ink);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--petrol);
+            box-shadow: 0 0 0 3px rgba(181, 138, 71, 0.1);
+        }
+
+        button {
+            background: var(--petrol);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button.secondary { background: var(--ink-soft); }
+
+        .console {
+            background: #1B2A41;
+            color: #4cae7d;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            line-height: 1.4;
+            margin: 10px 0;
+        }
+
+        .console-entry { margin: 4px 0; }
+        .console-error { color: #ff6b6b; }
+        .console-warn { color: #ffa94d; }
+        .console-success { color: #4cae7d; }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #E5DBC9;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--ink-soft);
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: var(--petrol);
+            color: var(--ink);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .badge {
+            display: inline-block;
+            background: var(--petrol);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge.offline { background: var(--ink-soft); }
+        .badge.online { background: var(--pos); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🔐 JANUS</h1>
+        <p>Central Privada Patrimonial — v1.1</p>
+        <p style="font-size: 12px; margin-top: 10px; opacity: 0.8;">
+            Status: <span id="modeStatus">Inicializando...</span>
+        </p>
+    </div>
+
+    <div id="statusAlert" class="status info">
+        ⏳ Inicializando sistema...
+    </div>
+
+    <div class="card">
+        <h3>🔑 Autenticação</h3>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('login')">Entrar</button>
+            <button class="tab-btn" onclick="switchTab('signup')">Criar Conta</button>
+        </div>
+
+        <div id="login" class="tab-content active">
+            <div class="field">
+                <label>E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" autocomplete="email">
+            </div>
+            <div class="field">
+                <label>Senha</label>
+                <input type="password" id="password" placeholder="Mínimo 6 caracteres" autocomplete="password">
+            </div>
+            <button onclick="handleLogin()">🔓 Entrar</button>
+            <button class="secondary" onclick="handleOffline()">📱 Usar Modo Offline</button>
+        </div>
+
+        <div id="signup" class="tab-content">
+            <div class="field">
+                <label>E-mail</label>
+                <input type="email" id="emailSignup" placeholder="seu@email.com">
+            </div>
+            <div class="field">
+                <label>Senha</label>
+                <input type="password" id="passwordSignup" placeholder="Mínimo 6 caracteres">
+            </div>
+            <button onclick="handleSignup()">✨ Criar Conta</button>
+            <button class="secondary" onclick="switchTab('login')">Voltar ao Login</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>💾 Dados Locais</h3>
+        <div class="field">
+            <label>Seus dados salvos:</label>
+            <textarea id="dataDisplay" rows="6" placeholder="Nenhum dado salvo ainda..." readonly></textarea>
+        </div>
+        <button onclick="exportData()">📥 Exportar Backup</button>
+        <button class="secondary" onclick="importData()">📤 Importar Backup</button>
+        <button class="secondary" onclick="clearData()">🗑️ Limpar Dados</button>
+        <input type="file" id="fileInput" accept=".json" style="display: none;">
+    </div>
+
+    <div class="card">
+        <h3>📊 Console do Sistema</h3>
+        <div id="console" class="console"></div>
+        <button class="secondary" onclick="clearConsole()">Limpar Log</button>
+    </div>
+
+    <div class="card">
+        <h3>ℹ️ Informações</h3>
+        <p><strong>Versão:</strong> 1.1 Final Testado</p>
+        <p><strong>localStorage:</strong> <span id="storageStatus">Verificando...</span></p>
+        <p><strong>Supabase:</strong> <span id="supabaseStatus">Aguardando...</span></p>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // CONFIGURAÇÃO
+    // ============================================================
+    const DB_KEY = 'JANUS_DB_v1';
+    const SUPA_URL = 'https://lsqgxxzauzjcozdroyvo.supabase.co';
+    const SUPA_KEY = 'sb_publishable_eKfdd1atcOYAKPesyiXjVg_SBkwcW6t';
+
+    let supa = null;
+    let supaUser = null;
+    let isOnline = false;
+    let appMode = 'offline'; // 'offline' ou 'online'
+
+    // ============================================================
+    // LOGGING
+    // ============================================================
+    function consoleLog(msg, type = 'log') {
+        const console = document.getElementById('console');
+        const entry = document.createElement('div');
+        entry.className = 'console-entry console-' + type;
+        
+        const now = new Date().toLocaleTimeString();
+        entry.textContent = `[${now}] ${msg}`;
+        
+        console.appendChild(entry);
+        console.scrollTop = console.scrollHeight;
+        
+        // Log também no console do browser
+        if (type === 'error') console.error('[JANUS]', msg);
+        else if (type === 'warn') console.warn('[JANUS]', msg);
+        else console.log('[JANUS]', msg);
+    }
+
+    function updateStatus(msg, type = 'info') {
+        const alert = document.getElementById('statusAlert');
+        alert.className = 'status ' + type;
+        alert.textContent = msg;
+        consoleLog(msg, type === 'ok' ? 'success' : type === 'error' ? 'error' : 'warn');
+    }
+
+    // ============================================================
+    // ARMAZENAMENTO LOCAL
+    // ============================================================
+    function loadData() {
+        try {
+            const data = localStorage.getItem(DB_KEY);
+            return data ? JSON.parse(data) : { mov: [], config: {} };
+        } catch (e) {
+            consoleLog('Erro ao carregar dados: ' + e.message, 'error');
+            return { mov: [], config: {} };
+        }
+    }
+
+    function saveData(data) {
+        try {
+            localStorage.setItem(DB_KEY, JSON.stringify(data));
+            displayData(data);
+            updateStatus('✅ Dados salvos localmente', 'ok');
+            consoleLog('Dados salvos com sucesso');
+        } catch (e) {
+            updateStatus('❌ Erro ao salvar: ' + e.message, 'error');
+        }
+    }
+
+    function displayData(data) {
+        const el = document.getElementById('dataDisplay');
+        el.value = JSON.stringify(data, null, 2);
+    }
+
+    function exportData() {
+        const data = loadData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `janus-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        consoleLog('Dados exportados');
+    }
+
+    function importData() {
+        document.getElementById('fileInput').click();
+    }
+
+    function clearData() {
+        if (confirm('⚠️ Limpar todos os dados? Esta ação não pode ser desfeita.')) {
+            localStorage.removeItem(DB_KEY);
+            document.getElementById('dataDisplay').value = '';
+            updateStatus('✅ Dados limpados', 'ok');
+            consoleLog('Dados limpados');
+        }
+    }
+
+    function clearConsole() {
+        document.getElementById('console').innerHTML = '';
+    }
+
+    // ============================================================
+    // AUTENTICAÇÃO SUPABASE
+    // ============================================================
+    async function initSupabase() {
+        consoleLog('Iniciando Supabase...');
+        
+        // Aguarda Supabase estar disponível (máx 5 segundos)
+        let tries = 0;
+        while (typeof supabase === 'undefined' && tries < 50) {
+            await new Promise(r => setTimeout(r, 100));
+            tries++;
+        }
+
+        if (typeof supabase === 'undefined') {
+            consoleLog('⚠️ Supabase não está disponível - modo offline', 'warn');
+            document.getElementById('supabaseStatus').textContent = '❌ Indisponível';
+            return;
+        }
+
+        try {
+            consoleLog('Criando cliente Supabase...');
+            supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
+                auth: { persistSession: true, autoRefreshToken: true }
+            });
+
+            const { data: { session }, error: sessErr } = await supa.auth.getSession();
+
+            if (sessErr) throw sessErr;
+
+            if (session) {
+                consoleLog('✅ Sessão encontrada: ' + session.user.email);
+                supaUser = session.user;
+                isOnline = true;
+                appMode = 'online';
+                updateStatus('✅ Conectado ao Supabase como ' + session.user.email, 'ok');
+            } else {
+                consoleLog('Nenhuma sessão ativa');
+                document.getElementById('supabaseStatus').textContent = '✅ Pronto (offline)';
+            }
+        } catch (e) {
+            consoleLog('Erro ao inicializar Supabase: ' + e.message, 'error');
+            document.getElementById('supabaseStatus').textContent = '❌ Erro';
+        }
+    }
+
+    async function handleLogin() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (!email || !password) {
+            updateStatus('❌ Preencha e-mail e senha', 'error');
+            return;
+        }
+
+        if (!supa) {
+            updateStatus('❌ Supabase não está disponível', 'error');
+            return;
+        }
+
+        try {
+            updateStatus('⏳ Autenticando...', 'info');
+            const { data, error } = await supa.auth.signInWithPassword({ email, password });
+
+            if (error) throw error;
+
+            supaUser = data.user;
+            isOnline = true;
+            appMode = 'online';
+            updateStatus('✅ Login bem-sucedido! Bem-vindo, ' + email, 'ok');
+            consoleLog('Login realizado: ' + email);
+            
+            // Limpar campos
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        } catch (e) {
+            updateStatus('❌ Erro no login: ' + e.message, 'error');
+            consoleLog('Erro ao fazer login: ' + e.message, 'error');
+        }
+    }
+
+    async function handleSignup() {
+        const email = document.getElementById('emailSignup').value.trim();
+        const password = document.getElementById('passwordSignup').value.trim();
+
+        if (!email || !password) {
+            updateStatus('❌ Preencha e-mail e senha', 'error');
+            return;
+        }
+
+        if (password.length < 6) {
+            updateStatus('❌ Senha deve ter no mínimo 6 caracteres', 'error');
+            return;
+        }
+
+        if (!supa) {
+            updateStatus('❌ Supabase não está disponível', 'error');
+            return;
+        }
+
+        try {
+            updateStatus('⏳ Criando conta...', 'info');
+            const { data, error } = await supa.auth.signUp({ email, password });
+
+            if (error) throw error;
+
+            updateStatus('✅ Conta criada! Verifique seu e-mail para confirmar.', 'ok');
+            consoleLog('Conta criada: ' + email);
+            
+            // Limpar campos
+            document.getElementById('emailSignup').value = '';
+            document.getElementById('passwordSignup').value = '';
+            switchTab('login');
+        } catch (e) {
+            updateStatus('❌ Erro ao criar conta: ' + e.message, 'error');
+            consoleLog('Erro ao criar conta: ' + e.message, 'error');
+        }
+    }
+
+    function handleOffline() {
+        appMode = 'offline';
+        isOnline = false;
+        updateStatus('📱 Modo Offline ativado - dados salvos localmente neste navegador', 'ok');
+        consoleLog('Modo offline ativado');
+        displayData(loadData());
+    }
+
+    // ============================================================
+    // UI
+    // ============================================================
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    // ============================================================
+    // INICIALIZAÇÃO
+    // ============================================================
+    window.addEventListener('load', () => {
+        consoleLog('🚀 JANUS inicializado');
+
+        // Verificar localStorage
+        try {
+            localStorage.setItem('_test', '1');
+            localStorage.removeItem('_test');
+            document.getElementById('storageStatus').textContent = '✅ Disponível';
+            consoleLog('localStorage disponível');
+        } catch (e) {
+            document.getElementById('storageStatus').textContent = '❌ Indisponível';
+            consoleLog('localStorage indisponível: ' + e.message, 'error');
+        }
+
+        // Carregar dados
+        displayData(loadData());
+
+        // Inicializar Supabase em background
+        consoleLog('Aguardando Supabase...');
+        setTimeout(() => initSupabase(), 500);
+
+        // Atualizar status
+        document.getElementById('modeStatus').textContent = appMode === 'offline' ? 
+            '📱 Offline' : '🌐 Online';
+    });
+
+    // File import
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const data = JSON.parse(evt.target.result);
+                saveData(data);
+                consoleLog('Backup importado com sucesso');
+            } catch (err) {
+                updateStatus('❌ Erro ao importar arquivo: ' + err.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+    });
+</script>
+
+<!-- Carregar Supabase do CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
+</body>
+</html>
